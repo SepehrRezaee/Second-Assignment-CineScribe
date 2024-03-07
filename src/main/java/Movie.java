@@ -5,13 +5,20 @@ import java.net.URLConnection;
 import java.io.BufferedReader;
 import java.util.ArrayList;
 public class Movie {
-    public static final String API_KEY = "Your API_KEY";   // TODO --> add your api key about Movie here
-    int ImdbVotes;
-    ArrayList<String> actorsList;
-    String rating;
+    public static final String API_KEY = "1c39920b";
+    private int ImdbVotes;
+    private ArrayList<String> actorsList;
+    private String rating;
 
-    public Movie(ArrayList<String> actorsList, String rating, int ImdbVotes){
-        //TODO --> (Write a proper constructor using the get_from_api functions)
+    public Movie(String movieName) {
+        try {
+            String moviesInfoJson = getMovieData(movieName);
+            this.ImdbVotes = getImdbVotesViaApi(moviesInfoJson);
+            this.rating = getRatingViaApi(moviesInfoJson);
+            getActorListViaApi(moviesInfoJson);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @SuppressWarnings("deprecation")
@@ -37,20 +44,36 @@ public class Movie {
         return stringBuilder.toString();
     }
     public int getImdbVotesViaApi(String moviesInfoJson){
-        //TODO --> (This function must change and return the "ImdbVotes" as an Integer)
-        // NOTICE :: you are not permitted to convert this function to return a String instead of an int !!!
-        int ImdbVotes = 0;
-        return ImdbVotes;
+        JSONObject json = new JSONObject(moviesInfoJson);
+        if (json.has("imdbVotes")) {
+            return json.getInt("imdbVotes");
+        }
+        return 0;
     }
 
     public String getRatingViaApi(String moviesInfoJson){
-        //TODO --> (This function must return the rating in the "Ratings" part
-        // where the source is "Internet Movie Database")  -->
-        String rating = "";
-        return rating;
+        JSONObject json = new JSONObject(moviesInfoJson);
+        if (json.has("Ratings")) {
+            JSONArray ratings = json.getJSONArray("Ratings");
+            for (int i = 0; i < ratings.length(); i++) {
+                JSONObject rating = ratings.getJSONObject(i);
+                if (rating.getString("Source").equals("Internet Movie Database")) {
+                    return rating.getString("Value");
+                }
+            }
+        }
+        return "";
     }
 
     public void getActorListViaApi(String movieInfoJson){
-        //TODO --> (This function must return the "Actors" in actorsList)
+       JSONObject json = new JSONObject(movieInfoJson);
+        if (json.has("Actors")) {
+            String actors = json.getString("Actors");
+            actorsList = new ArrayList<>();
+            String[] actorsArray = actors.split(", ");
+            for (String actor : actorsArray) {
+                actorsList.add(actor);
+            }
+        }
     }
 }
