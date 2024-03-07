@@ -4,12 +4,18 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.HttpURLConnection;
 public class Actors {
-    public static final String API_KEY = "Your API_KEY";   // TODO --> add your api key about Actors here
+    public static final String API_KEY = "I2aWqgEivkyv3STpfvMzgA==VCkG1TiMWUCWH0Nv";   // TODO --> add your api key about Actors here
     String netWorth;
     Boolean isAlive;
 
     public Actors(String netWorth, boolean isAlive){
-        //TODO --> (Write a proper constructor using the get_from_api functions)
+        public static final String API_KEY = "I2aWqgEivkyv3STpfvMzgA==VCkG1TiMWUCWH0Nv";   // TODO --> add your api key about Actors here
+        private String netWorth;
+        private Boolean isAlive;
+
+        public Actors(String actorsInfoJson) {
+        this.netWorth = getNetWorthViaApi(actorsInfoJson);
+        this.isAlive = isAlive(actorsInfoJson);
     }
     @SuppressWarnings({"deprecation"})
     /**
@@ -44,21 +50,27 @@ public class Actors {
         }
     }
     public double getNetWorthViaApi(String actorsInfoJson){
-        //TODO --> (This function must return the "NetWorth")
-        double result = 0.0;
-        return result;
+        JSONObject json = new JSONObject(actorsInfoJson);
+        if (json.has("net_worth")) {
+            return json.getDouble("net_worth");
+        }
+        return 0.0;
     }
 
     public boolean isAlive(String actorsInfoJson){
-        //TODO --> (If your chosen actor is alive it must return true otherwise it must return false)
-        boolean statues = false;
-        return statues;
+        JSONObject json = new JSONObject(actorsInfoJson);
+        if (json.has("deathdate")) {
+            return false;
+        }
+        return true;
     }
 
     public String getDateOfDeathViaApi(String actorsInfoJson){
-        //TODO --> (If your chosen actor is deceased it must return the date of death)  -->
-        String date = "";
-        return date;
+        JSONObject json = new JSONObject(actorsInfoJson);
+        if (json.has("deathdate")) {
+            return json.getString("deathdate");
+        }
+        return "";
     }
 
 }
