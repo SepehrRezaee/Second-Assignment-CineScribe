@@ -9,37 +9,40 @@ import java.net.URL;
 public class Actors {
     public static final String API_KEY = "I2aWqgEivkyv3STpfvMzgA==VCkG1TiMWUCWH0Nv";
 
+    private String netWorth;
+    private boolean isAlive;
+
     public Actors(String netWorth, boolean isAlive) {
         this.netWorth = netWorth;
         this.isAlive = isAlive;
     }
 
-    private String netWorth;
-    private Boolean isAlive;
+    public double getNetWorth() {
+        return Double.parseDouble(netWorth);
+    }
 
-    @SuppressWarnings({"deprecation"})
-    /**
-     * Retrieves data for the specified actor.
-     * @param name for which Actor should be retrieved
-     * @return a string representation of the Actors info or null if an error occurred
-     */
+    public boolean isAlive() {
+        return isAlive;
+    }
+
+    @SuppressWarnings("deprecation")
     public String getActorData(String name) {
         try {
             URL url = new URL("https://api.api-ninjas.com/v1/celebrity?name=" +
                     name.replace(" ", "+") + "&apikey=" + API_KEY);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestProperty("X-Api-Key", API_KEY);
-            System.out.println(connection);
-            if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
-                BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-                String inputLine;
-                StringBuilder response = new StringBuilder();
 
-                while ((inputLine = in.readLine()) != null) {
-                    response.append(inputLine);
+            if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
+                BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                StringBuilder response = new StringBuilder();
+                String line;
+
+                while ((line = reader.readLine()) != null) {
+                    response.append(line);
                 }
 
-                in.close();
+                reader.close();
                 return response.toString();
             } else {
                 return "Error: " + connection.getResponseCode() + " " + connection.getResponseMessage();
@@ -50,27 +53,21 @@ public class Actors {
         }
     }
 
-    public double getNetWorthViaApi(String actorsInfoJson) {
-        JSONObject json = new JSONObject(actorsInfoJson);
-        if (json.has("net_worth")) {
-            return json.getDouble("net_worth");
-        }
-        return 0.0;
+    public void setNetWorthFromApi(String actorsInfoJson) {
+        JSONArray jsonArray = new JSONArray(actorsInfoJson);
+        JSONObject info = jsonArray.getJSONObject(0);
+        netWorth = String.valueOf(info.getDouble("net_worth"));
     }
 
-    public boolean isAlive(String actorsInfoJson) {
-        JSONObject json = new JSONObject(actorsInfoJson);
-        if (json.has("deathdate")) {
-            return false;
-        }
-        return true;
+    public void setAliveStatusFromApi(String actorsInfoJson) {
+        JSONArray jsonArray = new JSONArray(actorsInfoJson);
+        JSONObject info = jsonArray.getJSONObject(0);
+        isAlive = info.getBoolean("is_alive");
     }
 
-    public String getDateOfDeathViaApi(String actorsInfoJson) {
-        JSONObject json = new JSONObject(actorsInfoJson);
-        if (json.has("deathdate")) {
-            return json.getString("deathdate");
-        }
-        return "";
+    public String getDateOfDeath(String actorsInfoJson) {
+        JSONArray jsonArray = new JSONArray(actorsInfoJson);
+        JSONObject info = jsonArray.getJSONObject(0);
+        return info.getString("death");
     }
 }
