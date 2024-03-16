@@ -5,52 +5,66 @@ import java.net.URLConnection;
 import java.io.BufferedReader;
 import java.util.ArrayList;
 public class Movie {
-    public static final String API_KEY = "Your API_KEY";   // TODO --> add your api key about Movie here
-    int ImdbVotes;
-    ArrayList<String> actorsList;
-    String rating;
+    public static final String API_KEY = "1c39920b";
+    private int ImdbVotes;
+    private ArrayList<String> actorsList;
+    private String rating;
 
-    public Movie(ArrayList<String> actorsList, String rating, int ImdbVotes){
-        //TODO --> (Write a proper constructor using the get_from_api functions)
+    public Movie(ArrayList<String> actorsList, String rating, int imdbVotes) {
+        this.actorsList = actorsList;
+        this.rating = rating;
+        this.imdbVotes = imdbVotes;
+    }
+
+    public ArrayList<String> getActorsList() {
+        return actorsList;
     }
 
     @SuppressWarnings("deprecation")
-    /**
-     * Retrieves data for the specified movie.
-     *
-     * @param title the name of the title for which MovieData should be retrieved
-     * @return a string representation of the MovieData, or null if an error occurred
-     */
-
     public String getMovieData(String title) throws IOException {
-        URL url = new URL("https://www.omdbapi.com/?t="+title+"&apikey="+API_KEY);
-        URLConnection Url = url.openConnection();
-        Url.setRequestProperty("Authorization", "Key" + API_KEY);
-        BufferedReader reader = new BufferedReader(new InputStreamReader(Url.getInputStream()));
-        String line;
+        URL url = new URL("https://www.omdbapi.com/?t=" + title + "&apikey=" + API_KEY);
+        URLConnection urlConnection = url.openConnection();
+        urlConnection.setRequestProperty("Authorization", "Key" + API_KEY);
+        BufferedReader reader = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
         StringBuilder stringBuilder = new StringBuilder();
-        while ((line = reader.readLine())!=null) {
+        String line;
+
+        while ((line = reader.readLine()) != null) {
             stringBuilder.append(line);
         }
+
         reader.close();
-        //handle an error if the chosen movie is not found
-        return stringBuilder.toString();
-    }
-    public int getImdbVotesViaApi(String moviesInfoJson){
-        //TODO --> (This function must change and return the "ImdbVotes" as an Integer)
-        // NOTICE :: you are not permitted to convert this function to return a String instead of an int !!!
-        int ImdbVotes = 0;
-        return ImdbVotes;
+        String responseJson = stringBuilder.toString();
+        JSONObject info = new JSONObject(responseJson);
+        boolean isValid = info.getBoolean("Response");
+
+        if (isValid) {
+            return responseJson;
+        } else {
+            throw new IOException("Not Found!!");
+        }
     }
 
-    public String getRatingViaApi(String moviesInfoJson){
-        //TODO --> (This function must return the rating in the "Ratings" part
-        // where the source is "Internet Movie Database")  -->
-        String rating = "";
-        return rating;
+    public int getImdbVotesFromApi(String moviesInfoJson) {
+        JSONObject info = new JSONObject(moviesInfoJson);
+        String votes = info.getString("imdbVotes");
+        String output = votes.replaceAll("[,]", "");
+        return Integer.parseInt(output);
     }
 
-    public void getActorListViaApi(String movieInfoJson){
-        //TODO --> (This function must return the "Actors" in actorsList)
+    public String getRatingFromApi(String moviesInfoJson) {
+        JSONObject info = new JSONObject(moviesInfoJson);
+        JSONArray ratings = info.getJSONArray("Ratings");
+        JSONObject rate = ratings.getJSONObject(0);
+        return rate.getString("Value");
+    }
+
+    public void getActorListFromApi(String movieInfoJson) {
+        JSONObject info = new JSONObject(movieInfoJson);
+        String actors = info.getString("Actors");
+
+        for (String actor : actors.split(", ")) {
+            actorsList.add(actor);
+        }
     }
 }
