@@ -10,70 +10,61 @@ public class Movie {
     private ArrayList<String> actorsList;
     private String rating;
 
-    public Movie(String movieName) {
-        try {
-            String moviesInfoJson = getMovieData(movieName);
-            this.ImdbVotes = getImdbVotesViaApi(moviesInfoJson);
-            this.rating = getRatingViaApi(moviesInfoJson);
-            getActorListViaApi(moviesInfoJson);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    public Movie(ArrayList<String> actorsList, String rating, int imdbVotes) {
+        this.actorsList = actorsList;
+        this.rating = rating;
+        this.imdbVotes = imdbVotes;
+    }
+
+    public ArrayList<String> getActorsList() {
+        return actorsList;
     }
 
     @SuppressWarnings("deprecation")
-    /**
-     * Retrieves data for the specified movie.
-     *
-     * @param title the name of the title for which MovieData should be retrieved
-     * @return a string representation of the MovieData, or null if an error occurred
-     */
-
     public String getMovieData(String title) throws IOException {
-        URL url = new URL("https://www.omdbapi.com/?t="+title+"&apikey="+API_KEY);
-        URLConnection Url = url.openConnection();
-        Url.setRequestProperty("Authorization", "Key" + API_KEY);
-        BufferedReader reader = new BufferedReader(new InputStreamReader(Url.getInputStream()));
-        String line;
+        URL url = new URL("https://www.omdbapi.com/?t=" + title + "&apikey=" + API_KEY);
+        URLConnection urlConnection = url.openConnection();
+        urlConnection.setRequestProperty("Authorization", "Key" + API_KEY);
+        BufferedReader reader = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
         StringBuilder stringBuilder = new StringBuilder();
-        while ((line = reader.readLine())!=null) {
+        String line;
+
+        while ((line = reader.readLine()) != null) {
             stringBuilder.append(line);
         }
+
         reader.close();
-        //handle an error if the chosen movie is not found
-        return stringBuilder.toString();
-    }
-    public int getImdbVotesViaApi(String moviesInfoJson){
-        JSONObject json = new JSONObject(moviesInfoJson);
-        if (json.has("imdbVotes")) {
-            return json.getInt("imdbVotes");
+        String responseJson = stringBuilder.toString();
+        JSONObject info = new JSONObject(responseJson);
+        boolean isValid = info.getBoolean("Response");
+
+        if (isValid) {
+            return responseJson;
+        } else {
+            throw new IOException("Not Found!!");
         }
-        return 0;
     }
 
-    public String getRatingViaApi(String moviesInfoJson){
-        JSONObject json = new JSONObject(moviesInfoJson);
-        if (json.has("Ratings")) {
-            JSONArray ratings = json.getJSONArray("Ratings");
-            for (int i = 0; i < ratings.length(); i++) {
-                JSONObject rating = ratings.getJSONObject(i);
-                if (rating.getString("Source").equals("Internet Movie Database")) {
-                    return rating.getString("Value");
-                }
-            }
-        }
-        return "";
+    public int getImdbVotesFromApi(String moviesInfoJson) {
+        JSONObject info = new JSONObject(moviesInfoJson);
+        String votes = info.getString("imdbVotes");
+        String output = votes.replaceAll("[,]", "");
+        return Integer.parseInt(output);
     }
 
-    public void getActorListViaApi(String movieInfoJson){
-       JSONObject json = new JSONObject(movieInfoJson);
-        if (json.has("Actors")) {
-            String actors = json.getString("Actors");
-            actorsList = new ArrayList<>();
-            String[] actorsArray = actors.split(", ");
-            for (String actor : actorsArray) {
-                actorsList.add(actor);
-            }
+    public String getRatingFromApi(String moviesInfoJson) {
+        JSONObject info = new JSONObject(moviesInfoJson);
+        JSONArray ratings = info.getJSONArray("Ratings");
+        JSONObject rate = ratings.getJSONObject(0);
+        return rate.getString("Value");
+    }
+
+    public void getActorListFromApi(String movieInfoJson) {
+        JSONObject info = new JSONObject(movieInfoJson);
+        String actors = info.getString("Actors");
+
+        for (String actor : actors.split(", ")) {
+            actorsList.add(actor);
         }
     }
 }
